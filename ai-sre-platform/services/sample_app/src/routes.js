@@ -1,11 +1,24 @@
 const express = require("express");
-const { recordMetric } = require("./metrics");
+const { recordMetric, getMetrics } = require("./metrics");
 
 const router = express.Router();
+
+// 🔹 Structured logger
+function log(level, message) {
+  console.log(
+    JSON.stringify({
+      service: "sample-app",
+      level,
+      message,
+      timestamp: Date.now(),
+    })
+  );
+}
 
 // Health check
 router.get("/health", (req, res) => {
   recordMetric(50, 0);
+  log("INFO", "Health check successful");
   res.json({ status: "UP" });
 });
 
@@ -14,6 +27,7 @@ router.get("/api/users", (req, res) => {
   const latency = Math.random() * 200;
   setTimeout(() => {
     recordMetric(latency, 0);
+    log("INFO", "Users fetched successfully");
     res.json({ users: ["Alice", "Bob", "Charlie"] });
   }, latency);
 });
@@ -26,22 +40,19 @@ router.get("/api/orders", (req, res) => {
   setTimeout(() => {
     if (errorChance > 0.8) {
       recordMetric(latency, 1);
-      console.error("❌ Order service failed");
+      log("ERROR", "Order service failed");
       return res.status(500).json({ error: "Order service failure" });
     }
 
     recordMetric(latency, 0);
+    log("INFO", "Order request processed successfully");
     res.json({ orders: ["Order1", "Order2"] });
   }, latency);
 });
 
-const { getMetrics } = require("./metrics");
-
+// Metrics endpoint
 router.get("/metrics", (req, res) => {
   res.json(getMetrics());
 });
 
-
 module.exports = router;
-
-
