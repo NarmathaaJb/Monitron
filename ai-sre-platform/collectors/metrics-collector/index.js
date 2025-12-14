@@ -2,10 +2,12 @@ const axios = require("axios");
 
 const SERVICE_NAME = "sample-app";
 const METRICS_ENDPOINT = "http://localhost:3001/metrics";
+const BACKEND_ENDPOINT = "http://localhost:4000/metrics";
 const INTERVAL = 5000; // 5 seconds
 
 async function collectMetrics() {
   try {
+    // 1️⃣ Pull metrics from sample app
     const response = await axios.get(METRICS_ENDPOINT);
 
     const payload = {
@@ -14,9 +16,12 @@ async function collectMetrics() {
       collectedAt: new Date().toISOString(),
     };
 
-    console.log("📊 Collected Metrics:", payload);
+    // 2️⃣ Send metrics to central backend
+    await axios.post(BACKEND_ENDPOINT, payload);
+
+    console.log("✅ Sent metrics to backend:", payload);
   } catch (err) {
-    console.error("⚠️ Failed to collect metrics:", err.message);
+    console.error("⚠️ Failed to collect/send metrics:", err.message);
   }
 }
 
